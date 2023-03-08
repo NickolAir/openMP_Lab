@@ -47,6 +47,7 @@ double *create_matrix (int N){
 
 double norm (const double *vector, int N){
     double res = 0;
+#pragma omp parallel for
     for (int i = 0; i < N; ++i) {
         res += vector[i] * vector[i];
     }
@@ -62,8 +63,9 @@ int criterion (double *Ax, double normB, int N){
         return 0;
     }
 }
-
+//res := Ax-b
 void ParallelCalculate(double* Matrix, double* x0, double* res, double* vectorB, int size){
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
         res[i] = 0 - vectorB[i];
         for (int j = 0; j < size; j++) {
@@ -72,10 +74,18 @@ void ParallelCalculate(double* Matrix, double* x0, double* res, double* vectorB,
     }
 }
 
-void ParallelSubtract(double* proc_x, double* proc_res, int size, int numRow, int numprocs, int rank){
-    for (int i = 0; i < numRow; i++) {
-        proc_x[i] -= proc_res[i] * t;
+void ParallelSubtract(double* res, double* x0, int size){
+#pragma omp parallel for
+    for (int i = 0; i < size; i++) {
+        x0[i] -= res[i] * t;
     }
+}
+
+void FreeProcess(double* Matrix, double* vectorB, double* x0, double* res) {
+    free(Matrix);
+    free(vectorB);
+    free(x0);
+    free(res);
 }
 
 int main(int argc, char *argv[]) {
@@ -99,16 +109,10 @@ int main(int argc, char *argv[]) {
     do {
         ParallelCalculate(Matrix, x0, res, vectorB, size);
         crit = criterion(res, normB, size);
-        ParallelSubtract(size);
+        ParallelSubtract(res, x0, size);
     } while(crit == 0);
     end_time = omp_get_wtime();
-
-    printf("Hello, World!\n");
-#pragma omp parallel num_threads (16)
-    { int i,n;
-        i = omp_get_thread_num();
-        n = omp_get_num_threads();
-        printf("I’m thread %d of %d\n",i,n);
-    }
-    return 0;
+    print_vector(x0, size);
+    printf("TIME TAKEN: %lf\n", end_time - start_time);
+    FreeProcess(Matrix, vectorB, x0, res);
 }
