@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <omp.h>
-#include <malloc.h>
 #include <math.h>
 #include <stdlib.h>
 
