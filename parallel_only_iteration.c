@@ -3,8 +3,8 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define E 0.0001
-#define t 0.0001
+#define E 0.00001
+#define t 0.00001
 #define DEFAULT 3
 
 void print_vector (double *vect, int N){
@@ -46,6 +46,7 @@ double *create_matrix (int N){
 
 double norm (const double *vector, int N){
     double res = 0;
+#pragma omp parallel for reduction(+:res)
     for (int i = 0; i < N; ++i) {
         res += vector[i] * vector[i];
     }

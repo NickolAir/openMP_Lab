@@ -46,7 +46,7 @@ double *create_matrix (int N){
 
 double norm (const double *vector, int N){
     double res = 0;
-#pragma omp parallel for
+#pragma omp parallel for reduction(+:res)
     for (int i = 0; i < N; ++i) {
         res += vector[i] * vector[i];
     }
