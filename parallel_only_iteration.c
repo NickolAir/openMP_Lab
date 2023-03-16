@@ -46,7 +46,7 @@ double *create_matrix (int N){
 
 double norm (const double *vector, int N){
     double res = 0;
-#pragma omp parallel for reduction(+:res)
+#pragma omp parallel for schedule(dynamic, 3125) reduction(+:res)
     for (int i = 0; i < N; ++i) {
         res += vector[i] * vector[i];
     }
@@ -64,7 +64,7 @@ int criterion (double *Ax, double normB, int N){
 }
 //res := Ax-b
 void ParallelCalculate(double* Matrix, double* x0, double* res, double* vectorB, int size){
-    #pragma omp for
+    #pragma omp for schedule(dynamic, 3125)
     for (int i = 0; i < size; i++) {
         res[i] = 0 - vectorB[i];
         for (int j = 0; j < size; j++) {
@@ -74,7 +74,7 @@ void ParallelCalculate(double* Matrix, double* x0, double* res, double* vectorB,
 }
 
 void ParallelSubtract(double* res, double* x0, int size){
-    #pragma omp for
+    #pragma omp for schedule(dynamic, 3125)
     for (int i = 0; i < size; i++) {
         x0[i] -= res[i] * t;
     }
@@ -97,14 +97,17 @@ int main(int argc, char *argv[]) {
     if (argc >= 2){
         size = atoi(argv[1]);
     }
+
     x0 = create_x0(size);
     res = create_x0(size);
     vectorB = create_vectorB(size);
     double normB;
     Matrix = create_matrix(size);
+
     start_time = omp_get_wtime();
     normB = norm(vectorB, size);
     int crit = 0;
+    omp_set_num_threads(8);
     #pragma omp parallel
     {
         do {
@@ -117,6 +120,7 @@ int main(int argc, char *argv[]) {
         } while(crit == 0);
     }
     end_time = omp_get_wtime();
+
     print_vector(x0, size);
     printf("TIME TAKEN: %lf\n", end_time - start_time);
     FreeProcess(Matrix, vectorB, x0, res);
